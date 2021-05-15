@@ -50,6 +50,7 @@ Emulated Cores (very easy to add new ones!)
 + ATTIny44/84
 + ATTiny2313/2313v
 + ATTiny13/13a
++ ATTiny26
 
 Extras:
 -------
