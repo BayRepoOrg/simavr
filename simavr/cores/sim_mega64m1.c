@@ -1,8 +1,7 @@
 /*
-	sim_tinyx5.c
+	sim_mega64m1.c
 
 	Copyright 2008, 2009 Michel Pollet <buserror@gmail.com>
-	                     Jon Escombe <lists@dresco.co.uk>
 
  	This file is part of simavr.
 
@@ -22,24 +21,23 @@
 
 #include "sim_avr.h"
 
-#include "sim_tinyx5.h"
+#define SIM_VECTOR_SIZE	2
+#define SIM_MMCU		"atmega64m1"
+#define SIM_CORENAME	mcu_mega64m1
 
-void tx5_init(struct avr_t * avr)
+#define _AVR_IO_H_
+#define __ASSEMBLER__
+#include "avr/iom64m1.h"
+// instantiate the new core
+#include "sim_megaxm1.h"
+
+static avr_t * make()
 {
-	struct mcu_t * mcu = (struct mcu_t*)avr;
-
-	avr_eeprom_init(avr, &mcu->eeprom);
-	avr_watchdog_init(avr, &mcu->watchdog);
-	avr_extint_init(avr, &mcu->extint);
-	avr_ioport_init(avr, &mcu->portb);
-	avr_acomp_init(avr, &mcu->acomp);
-	avr_adc_init(avr, &mcu->adc);
-	avr_timer_init(avr, &mcu->timer0);
-	avr_timer_init(avr, &mcu->timer1);
-	avr_usi_init(avr, &mcu->usi);
+	return avr_core_allocate(&SIM_CORENAME.core, sizeof(struct mcu_t));
 }
 
-void tx5_reset(struct avr_t * avr)
-{
-//	struct mcu_t * mcu = (struct mcu_t*)avr;
-}
+avr_kind_t mega64m1 = {
+	.names = { "atmega64m1" },
+	.make = make
+};
+

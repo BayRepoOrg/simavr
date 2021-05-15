@@ -243,7 +243,7 @@ inline void _avr_sp_set(avr_t * avr, uint16_t sp)
  */
 static inline void _avr_set_ram(avr_t * avr, uint16_t addr, uint8_t v)
 {
-	if (addr < MAX_IOs + 31)
+	if (addr <= avr->ioend)
 		_avr_set_r(avr, addr, v);
 	else
 		avr_core_watch_write(avr, addr, v);
@@ -590,7 +590,7 @@ _avr_flags_znv0s (struct avr_t * avr, uint8_t res)
 
 static inline int _avr_is_instruction_32_bits(avr_t * avr, avr_flashaddr_t pc)
 {
-	uint16_t o = _avr_flash_read16le(avr, pc) & 0xfc0f;
+	uint16_t o = _avr_flash_read16le(avr, pc) & 0xfe0f;
 	return	o == 0x9200 || // STS ! Store Direct to Data Space
 			o == 0x9000 || // LDS Load Direct from Data Space
 			o == 0x940c || // JMP Long Jump

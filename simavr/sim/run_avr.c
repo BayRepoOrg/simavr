@@ -38,16 +38,18 @@ display_usage(
 	const char * app)
 {
 	printf("Usage: %s [...] <firmware>\n", app);
-	printf( "		[--freq|-f <freq>]  Sets the frequency for an .hex firmware\n"
-			"		[--mcu|-m <device>] Sets the MCU type for an .hex firmware\n"
+	printf( "       [--freq|-f <freq>]  Sets the frequency for an .hex firmware\n"
+			"       [--mcu|-m <device>] Sets the MCU type for an .hex firmware\n"
 			"       [--list-cores]      List all supported AVR cores and exit\n"
 			"       [--help|-h]         Display this usage message and exit\n"
 			"       [--trace, -t]       Run full scale decoder trace\n"
 			"       [-ti <vector>]      Add traces for IRQ vector <vector>\n"
-			"       [--gdb|-g]          Listen for gdb connection on port 1234\n"
+			"       [--gdb|-g [<port>]] Listen for gdb connection on <port> (default 1234)\n"
 			"       [-ff <.hex file>]   Load next .hex file as flash\n"
 			"       [-ee <.hex file>]   Load next .hex file as eeprom\n"
-			"       [--input|-i <file>] A .vcd file to use as input signals\n"
+			"       [--input|-i <file>] A vcd file to use as input signals\n"
+			"       [--output|-o <file>] A vcd file to save the traced signals\n"
+			"       [--add-trace|-at <name=kind@addr/mask>] Add signal to be traced\n"
 			"       [-v]                Raise verbosity level\n"
 			"                           (can be passed more than once)\n"
 			"       <firmware>          A .hex or an ELF file. ELF files are\n"
@@ -90,6 +92,7 @@ main(
 	int trace = 0;
 	int gdb = 0;
 	int log = 1;
+	int port = 1234;
 	char name[24] = "";
 	uint32_t loadBase = AVR_SEGMENT_OFFSET_FLASH;
 	int trace_vectors[8] = {0};
@@ -121,14 +124,13 @@ main(
 				display_usage(basename(argv[0]));
 		} else if (!strcmp(argv[pi], "-t") || !strcmp(argv[pi], "--trace")) {
 			trace++;
-		} else if (!strcmp(argv[pi], "--vcd-trace-name")) {
+		} else if (!strcmp(argv[pi], "-o") || !strcmp(argv[pi], "--output")) {
 			if (pi + 1 >= argc) {
 				fprintf(stderr, "%s: missing mandatory argument for %s.\n", argv[0], argv[pi]);
 				exit(1);
 			}
-			++pi;
-			snprintf(f.tracename, sizeof(f.tracename), "%s",  argv[pi]);
-		} else if (!strcmp(argv[pi], "--add-vcd-trace")) {
+			snprintf(f.tracename, sizeof(f.tracename), "%s", argv[++pi]);
+		} else if (!strcmp(argv[pi], "-at") || !strcmp(argv[pi], "--add-trace")) {
 			if (pi + 1 >= argc) {
 				fprintf(stderr, "%s: missing mandatory argument for %s.\n", argv[0], argv[pi]);
 				exit(1);
@@ -185,17 +187,13 @@ main(
 			);
 
 			++f.tracecount;
-		} else if (!strcmp(argv[pi], "--vcd-trace-file")) {
-			if (pi + 1 >= argc) {
-				fprintf(stderr, "%s: missing mandatory argument for %s.\n", argv[0], argv[pi]);
-				exit(1);
-			}
-			snprintf(f.tracename, sizeof(f.tracename), "%s", argv[++pi]);
 		} else if (!strcmp(argv[pi], "-ti")) {
 			if (pi < argc-1)
 				trace_vectors[trace_vectors_count++] = atoi(argv[++pi]);
 		} else if (!strcmp(argv[pi], "-g") || !strcmp(argv[pi], "--gdb")) {
 			gdb++;
+			if (pi < (argc-2) && argv[pi+1][0] != '-' )
+				port = atoi(argv[++pi]);
 		} else if (!strcmp(argv[pi], "-v")) {
 			log++;
 		} else if (!strcmp(argv[pi], "-ee")) {
@@ -273,7 +271,7 @@ main(
 	}
 
 	// even if not setup at startup, activate gdb if crashing
-	avr->gdb_port = 1234;
+	avr->gdb_port = port;
 	if (gdb) {
 		avr->state = cpu_Stopped;
 		avr_gdb_init(avr);
